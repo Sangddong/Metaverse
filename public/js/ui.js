@@ -1,4 +1,14 @@
-import { COLORS, GAME_TYPES } from "/shared/constants.js";
+import {
+  COLORS,
+  HAIR_COLORS,
+  HAIR_STYLES,
+  OUTFIT_STYLES,
+  GAME_TYPES,
+  clampHair,
+  clampOutfit,
+  clampHairColor,
+} from "/shared/constants.js";
+import { paintMiniAvatar } from "./avatarDraw.js";
 
 export function $(id) {
   return document.getElementById(id);
@@ -25,9 +35,10 @@ export function setRoomUrl(code) {
   }
 }
 
-export function fillColors(root, selected, onPick) {
+export function fillColors(root, selected, onPick, palette = COLORS) {
+  if (!root) return;
   root.innerHTML = "";
-  for (const c of COLORS) {
+  for (const c of palette) {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "swatch" + (c === selected ? " on" : "");
@@ -35,6 +46,63 @@ export function fillColors(root, selected, onPick) {
     b.addEventListener("click", () => onPick(c));
     root.appendChild(b);
   }
+}
+
+export function fillHairColorIndices(root, selectedIndex, onPick) {
+  if (!root) return;
+  root.innerHTML = "";
+  HAIR_COLORS.forEach((c, idx) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "swatch" + (idx === selectedIndex ? " on" : "");
+    b.style.background = c;
+    b.addEventListener("click", () => onPick(idx));
+    root.appendChild(b);
+  });
+}
+
+export function fillStyleGrid(root, styles, selectedId, appearance, kind, onPick) {
+  if (!root) return;
+  root.innerHTML = "";
+  for (const s of styles) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "style-pick" + (s.id === selectedId ? " on" : "");
+    const canvas = document.createElement("canvas");
+    canvas.width = 56;
+    canvas.height = 72;
+    const ctx = canvas.getContext("2d");
+    paintMiniAvatar(ctx, {
+      color: appearance.color,
+      hair: kind === "hair" ? s.id : appearance.hair,
+      outfit: kind === "outfit" ? s.id : appearance.outfit,
+      hairColor: HAIR_COLORS[appearance.hairColorIndex] || HAIR_COLORS[0],
+    });
+    const label = document.createElement("span");
+    label.textContent = s.name;
+    b.append(canvas, label);
+    b.addEventListener("click", () => onPick(s.id));
+    root.appendChild(b);
+  }
+}
+
+export function renderLobbyAppearance(state) {
+  fillColors($("colorRow"), state.color, (c) => {
+    state.color = c;
+    renderLobbyAppearance(state);
+  });
+  fillHairColorIndices($("hairColorRow"), state.hairColorIndex, (idx) => {
+    state.hairColorIndex = idx;
+    renderLobbyAppearance(state);
+  });
+  fillStyleGrid($("hairRow"), HAIR_STYLES, state.hair, state, "hair", (id) => {
+    state.hair = id;
+    renderLobbyAppearance(state);
+  });
+  fillStyleGrid($("outfitRow"), OUTFIT_STYLES, state.outfit, state, "outfit", (id) => {
+    state.outfit = id;
+    renderLobbyAppearance(state);
+  });
 }
 
 export function toast(text) {
@@ -47,17 +115,13 @@ export function toast(text) {
   }, 2200);
 }
 
-export function renderLobbyColors(state) {
-  fillColors($("colorRow"), state.color, (c) => {
-    state.color = c;
-    renderLobbyColors(state);
-  });
-}
-
 export function bindLobby(state, handlers) {
   const saved = localStorage.getItem("playza-name");
   if (saved) $("nameInput").value = saved;
-  renderLobbyColors(state);
+  state.hair = clampHair(localStorage.getItem("playza-hair") ?? state.hair ?? 1);
+  state.outfit = clampOutfit(localStorage.getItem("playza-outfit") ?? state.outfit ?? 0);
+  state.hairColorIndex = clampHairColor(localStorage.getItem("playza-hairColor") ?? state.hairColorIndex ?? 0);
+  renderLobbyAppearance(state);
 
   const inviteCode = parseRoomFromUrl();
   if (inviteCode) {
@@ -69,7 +133,6 @@ export function bindLobby(state, handlers) {
     $("nameInput").addEventListener("keydown", (e) => {
       if (e.key === "Enter") handlers.join(inviteCode);
     });
-    // 자동 입장 없음 — 닉네임 확인 후 완료 버튼
     setTimeout(() => $("nameInput")?.focus(), 0);
   } else {
     $("homeFields").hidden = false;
@@ -231,13 +294,27 @@ export function bindHud(handlers) {
   $("closeHelp").onclick = () => ($("helpModal").hidden = true);
   $("settingsBtn").onclick = () => {
     $("renameInput").value = handlers.getName();
-    const paintSettings = (selected) => {
-      fillColors($("settingsColors"), selected, (c) => {
+    const appear = handlers.getAppearance();
+    const paintSettings = () => {
+      const a = handlers.getAppearance();
+      fillColors($("settingsColors"), a.color, (c) => {
         handlers.recolor(c);
-        paintSettings(c);
+        paintSettings();
+      });
+      fillHairColorIndices($("settingsHairColors"), a.hairColorIndex, (idx) => {
+        handlers.setHairColor(idx);
+        paintSettings();
+      });
+      fillStyleGrid($("settingsHair"), HAIR_STYLES, a.hair, a, "hair", (id) => {
+        handlers.setHair(id);
+        paintSettings();
+      });
+      fillStyleGrid($("settingsOutfit"), OUTFIT_STYLES, a.outfit, a, "outfit", (id) => {
+        handlers.setOutfit(id);
+        paintSettings();
       });
     };
-    paintSettings(handlers.getColor());
+    paintSettings();
     $("settingsModal").hidden = false;
   };
   $("closeSettings").onclick = () => ($("settingsModal").hidden = true);

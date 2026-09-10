@@ -12,7 +12,11 @@ import {
   RUN_SPEED,
   PLAYER_RADIUS,
   COLORS,
+  HAIR_COLORS,
   GAME_TYPES,
+  clampHair,
+  clampOutfit,
+  clampHairColor,
 } from "../shared/constants.js";
 import { createMap, spawnPoint, clampMove } from "../shared/map.js";
 import {
@@ -85,6 +89,10 @@ function snapshotPlayer(p) {
     id: p.id,
     name: p.name,
     color: p.color,
+    hair: clampHair(p.hair),
+    outfit: clampOutfit(p.outfit),
+    hairColor: HAIR_COLORS[clampHairColor(p.hairColorIndex)] || HAIR_COLORS[0],
+    hairColorIndex: clampHairColor(p.hairColorIndex),
     x: p.x,
     y: p.y,
     dir: p.dir,
@@ -141,7 +149,7 @@ function requireHost(socket, room) {
 io.on("connection", (socket) => {
   let joined = null;
 
-  socket.on("join", ({ roomId, name, color } = {}) => {
+  socket.on("join", ({ roomId, name, color, hair, outfit, hairColorIndex } = {}) => {
     const code = String(roomId || "PLAZ")
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "")
@@ -168,6 +176,9 @@ io.on("connection", (socket) => {
       if (prev && joined === code) {
         prev.name = cleanedName;
         if (COLORS.includes(color)) prev.color = color;
+        prev.hair = clampHair(hair ?? prev.hair);
+        prev.outfit = clampOutfit(outfit ?? prev.outfit);
+        prev.hairColorIndex = clampHairColor(hairColorIndex ?? prev.hairColorIndex);
         socket.emit("joined", { you: snapshotPlayer(prev), ...roomState(prevRoom) });
         emitState(prevRoom);
         return;
@@ -187,6 +198,9 @@ io.on("connection", (socket) => {
       id: socket.id,
       name: cleanedName,
       color: COLORS.includes(color) ? color : COLORS[room.players.size % COLORS.length],
+      hair: clampHair(hair ?? 1),
+      outfit: clampOutfit(outfit ?? 0),
+      hairColorIndex: clampHairColor(hairColorIndex ?? 0),
       x: spawn.x + (Math.random() * 80 - 40),
       y: spawn.y + (Math.random() * 60 - 30),
       vx: 0,
@@ -311,6 +325,17 @@ io.on("connection", (socket) => {
     const p = room?.players.get(socket.id);
     if (!p || !COLORS.includes(color)) return;
     p.color = color;
+    io.to(room.id).emit("playerPatch", snapshotPlayer(p));
+  });
+
+  socket.on("appear", (data = {}) => {
+    const room = rooms.get(joined);
+    const p = room?.players.get(socket.id);
+    if (!p) return;
+    if (data.color != null && COLORS.includes(data.color)) p.color = data.color;
+    if (data.hair != null) p.hair = clampHair(data.hair);
+    if (data.outfit != null) p.outfit = clampOutfit(data.outfit);
+    if (data.hairColorIndex != null) p.hairColorIndex = clampHairColor(data.hairColorIndex);
     io.to(room.id).emit("playerPatch", snapshotPlayer(p));
   });
 

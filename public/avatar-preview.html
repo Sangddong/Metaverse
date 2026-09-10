@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>아바타 프리뷰 — 머리/옷 20종</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #12201b;
+        --card: #1a2b24;
+        --line: rgba(255, 255, 255, 0.12);
+        --text: #f4f7f5;
+        --muted: #9eb0a8;
+        --accent: #7dffb3;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 32px 20px 64px;
+        background:
+          radial-gradient(circle at 20% 0%, #1d6b4f55, transparent 40%),
+          radial-gradient(circle at 90% 20%, #c9782a33, transparent 35%),
+          var(--bg);
+        color: var(--text);
+        font-family: "IBM Plex Sans KR", sans-serif;
+      }
+      h1 {
+        font-family: "Jua", sans-serif;
+        font-size: 42px;
+        margin: 0 0 8px;
+      }
+      .sub { color: var(--muted); margin: 0 0 28px; }
+      h2 {
+        font-family: "Jua", sans-serif;
+        font-size: 26px;
+        margin: 28px 0 12px;
+        color: var(--accent);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 12px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 12px 8px 10px;
+        text-align: center;
+      }
+      canvas {
+        width: 72px;
+        height: 92px;
+        image-rendering: pixelated;
+        background: rgba(255,255,255,0.03);
+        border-radius: 12px;
+      }
+      .name { margin-top: 8px; font-size: 12px; font-weight: 700; }
+      .id { color: var(--muted); font-size: 10px; }
+    </style>
+  </head>
+  <body>
+    <h1>모여봐 아바타 커스텀 프리뷰</h1>
+    <p class="sub">머리스타일 20종 · 옷 20종 (커밋 전 확인용)</p>
+
+    <h2>머리스타일</h2>
+    <div id="hairGrid" class="grid"></div>
+
+    <h2>옷</h2>
+    <div id="outfitGrid" class="grid"></div>
+
+    <script type="module">
+      import { HAIR_STYLES, OUTFIT_STYLES, HAIR_COLORS, COLORS } from "/shared/constants.js";
+      import { paintMiniAvatar } from "/js/avatarDraw.js";
+
+      function mount(root, styles, kind) {
+        for (const s of styles) {
+          const card = document.createElement("div");
+          card.className = "card";
+          const canvas = document.createElement("canvas");
+          canvas.width = 72;
+          canvas.height = 92;
+          const ctx = canvas.getContext("2d");
+          paintMiniAvatar(ctx, {
+            w: 72,
+            h: 92,
+            color: COLORS[kind === "outfit" ? s.id % COLORS.length : 4],
+            hair: kind === "hair" ? s.id : 1,
+            outfit: kind === "outfit" ? s.id : 0,
+            hairColor: HAIR_COLORS[kind === "hair" ? s.id % HAIR_COLORS.length : 0],
+          });
+          const name = document.createElement("div");
+          name.className = "name";
+          name.textContent = s.name;
+          const id = document.createElement("div");
+          id.className = "id";
+          id.textContent = `#${s.id}`;
+          card.append(canvas, name, id);
+          root.appendChild(card);
+        }
+      }
+
+      mount(document.getElementById("hairGrid"), HAIR_STYLES, "hair");
+      mount(document.getElementById("outfitGrid"), OUTFIT_STYLES, "outfit");
+    </script>
+  </body>
+</html>

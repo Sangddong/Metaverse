@@ -46,7 +46,9 @@ kbd {
 
 .lobby-card {
   position: relative;
-  width: min(440px, calc(100% - 32px));
+  width: min(520px, calc(100% - 32px));
+  max-height: min(92vh, 920px);
+  overflow: auto;
   padding: 32px 28px 24px;
   background: rgba(10, 18, 16, 0.72);
   border: 1px solid var(--line);
@@ -86,6 +88,42 @@ kbd {
   border: 2px solid transparent; cursor: pointer;
 }
 .swatch.on { border-color: white; transform: scale(1.08); }
+.style-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 4px 2px 8px;
+}
+.style-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.04);
+  color: white;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+.style-pick canvas {
+  width: 48px;
+  height: 60px;
+  image-rendering: pixelated;
+}
+.style-pick.on {
+  border-color: var(--accent);
+  background: rgba(125, 255, 179, 0.12);
+}
+.sheet-wide {
+  width: min(640px, calc(100% - 24px));
+  max-height: min(92vh, 900px);
+  overflow: auto;
+}
 
 .lobby-actions { display: grid; gap: 8px; margin-top: 8px; }
 .btn {

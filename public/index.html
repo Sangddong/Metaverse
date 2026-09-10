@@ -30,8 +30,20 @@
           <input id="nameInput" maxlength="12" placeholder="이름을 입력하세요" autocomplete="nickname" />
         </label>
         <div class="field">
-          <span>아바타 색</span>
+          <span>옷 색</span>
           <div id="colorRow" class="color-row"></div>
+        </div>
+        <div class="field">
+          <span>머리 색</span>
+          <div id="hairColorRow" class="color-row"></div>
+        </div>
+        <div class="field">
+          <span>머리스타일</span>
+          <div id="hairRow" class="style-grid"></div>
+        </div>
+        <div class="field">
+          <span>옷</span>
+          <div id="outfitRow" class="style-grid"></div>
         </div>
         <div id="homeFields">
           <label class="field">
@@ -114,15 +126,27 @@
       </div>
 
       <div id="settingsModal" class="modal" hidden>
-        <div class="sheet">
+        <div class="sheet sheet-wide">
           <h3>내 프로필</h3>
           <label class="field">
             <span>사용자명</span>
             <input id="renameInput" maxlength="12" />
           </label>
           <div class="field">
-            <span>색상</span>
+            <span>옷 색</span>
             <div id="settingsColors" class="color-row"></div>
+          </div>
+          <div class="field">
+            <span>머리 색</span>
+            <div id="settingsHairColors" class="color-row"></div>
+          </div>
+          <div class="field">
+            <span>머리스타일</span>
+            <div id="settingsHair" class="style-grid"></div>
+          </div>
+          <div class="field">
+            <span>옷</span>
+            <div id="settingsOutfit" class="style-grid"></div>
           </div>
           <div class="row-actions">
             <button id="saveSettings" class="btn primary" type="button">저장</button>
@@ -162,6 +186,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="/js/main.js?v=inviteName1"></script>
+    <script type="module" src="/js/main.js?v=avatar1"></script>
   </body>
 </html>

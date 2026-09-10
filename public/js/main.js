@@ -1,4 +1,4 @@
-import { COLORS } from "/shared/constants.js";
+import { COLORS, HAIR_COLORS, clampHair, clampOutfit, clampHairColor } from "/shared/constants.js";
 import {
   $,
   bindLobby,
@@ -28,9 +28,42 @@ const paint = createPaint();
 
 const lobbyState = {
   color: localStorage.getItem("playza-color") || COLORS[Math.floor(Math.random() * COLORS.length)],
+  hair: clampHair(localStorage.getItem("playza-hair") ?? 1),
+  outfit: clampOutfit(localStorage.getItem("playza-outfit") ?? 0),
+  hairColorIndex: clampHairColor(localStorage.getItem("playza-hairColor") ?? 0),
 };
 if (!COLORS.includes(lobbyState.color)) {
   lobbyState.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+}
+
+function saveAppearance() {
+  localStorage.setItem("playza-color", lobbyState.color);
+  localStorage.setItem("playza-hair", String(lobbyState.hair));
+  localStorage.setItem("playza-outfit", String(lobbyState.outfit));
+  localStorage.setItem("playza-hairColor", String(lobbyState.hairColorIndex));
+}
+
+function syncAppear(patch = {}) {
+  Object.assign(lobbyState, patch);
+  saveAppearance();
+  if (state.you) {
+    state.you = {
+      ...state.you,
+      color: lobbyState.color,
+      hair: lobbyState.hair,
+      outfit: lobbyState.outfit,
+      hairColorIndex: lobbyState.hairColorIndex,
+      hairColor: HAIR_COLORS[lobbyState.hairColorIndex],
+    };
+    const i = state.players.findIndex((p) => p.id === state.you.id);
+    if (i >= 0) state.players[i] = { ...state.players[i], ...state.you };
+  }
+  socket.emit("appear", {
+    color: lobbyState.color,
+    hair: lobbyState.hair,
+    outfit: lobbyState.outfit,
+    hairColorIndex: lobbyState.hairColorIndex,
+  });
 }
 
 const state = {
@@ -52,7 +85,7 @@ function rememberRoom(roomId) {
   setRoomUrl(code);
 }
 
-function emitJoin({ roomId, name, color }) {
+function emitJoin({ roomId, name, color, hair, outfit, hairColorIndex }) {
   const cleaned = String(name || "").trim();
   if (!cleaned) {
     showLobbyError("닉네임을 입력하세요.");
@@ -60,8 +93,15 @@ function emitJoin({ roomId, name, color }) {
     return;
   }
   joining = true;
-  pendingJoin = { roomId, name: cleaned, color };
-  socket.emit("join", { roomId: roomId || "PLAZ", name: cleaned, color });
+  pendingJoin = { roomId, name: cleaned, color, hair, outfit, hairColorIndex };
+  socket.emit("join", {
+    roomId: roomId || "PLAZ",
+    name: cleaned,
+    color,
+    hair,
+    outfit,
+    hairColorIndex,
+  });
 }
 
 function joinRoom(roomId) {
@@ -72,12 +112,15 @@ function joinRoom(roomId) {
     return;
   }
   localStorage.setItem("playza-name", name);
-  localStorage.setItem("playza-color", lobbyState.color);
+  saveAppearance();
   showLobbyError("");
   const payload = {
     roomId: roomId || localStorage.getItem("playza-room") || "PLAZ",
     name,
     color: lobbyState.color,
+    hair: lobbyState.hair,
+    outfit: lobbyState.outfit,
+    hairColorIndex: lobbyState.hairColorIndex,
   };
   if (socket.connected) emitJoin(payload);
   else pendingJoin = payload;
@@ -90,12 +133,24 @@ bindLobby(lobbyState, {
 bindHud({
   getName: () => state.you?.name || "",
   getColor: () => state.you?.color || lobbyState.color,
+  getAppearance: () => ({
+    color: state.you?.color || lobbyState.color,
+    hair: state.you?.hair ?? lobbyState.hair,
+    outfit: state.you?.outfit ?? lobbyState.outfit,
+    hairColorIndex: state.you?.hairColorIndex ?? lobbyState.hairColorIndex,
+  }),
   getRoomId: () => state.roomId,
   recolor(color) {
-    lobbyState.color = color;
-    localStorage.setItem("playza-color", color);
-    if (state.you) state.you.color = color;
-    socket.emit("recolor", color);
+    syncAppear({ color });
+  },
+  setHair(hair) {
+    syncAppear({ hair: clampHair(hair) });
+  },
+  setOutfit(outfit) {
+    syncAppear({ outfit: clampOutfit(outfit) });
+  },
+  setHairColor(hairColorIndex) {
+    syncAppear({ hairColorIndex: clampHairColor(hairColorIndex) });
   },
   rename(name) {
     const next = String(name || "").trim().slice(0, 12);
@@ -155,8 +210,11 @@ function applyJoined(payload) {
   state.game = payload.game;
   state.maxPlayers = payload.maxPlayers;
   lobbyState.color = payload.you.color || lobbyState.color;
+  lobbyState.hair = clampHair(payload.you.hair ?? lobbyState.hair);
+  lobbyState.outfit = clampOutfit(payload.you.outfit ?? lobbyState.outfit);
+  lobbyState.hairColorIndex = clampHairColor(payload.you.hairColorIndex ?? lobbyState.hairColorIndex);
   localStorage.setItem("playza-name", payload.you.name);
-  localStorage.setItem("playza-color", lobbyState.color);
+  saveAppearance();
   rememberRoom(payload.id);
   sessionStorage.setItem("playza-in-game", "1");
   enterGame();
@@ -176,6 +234,9 @@ function tryAutoJoin() {
       roomId: state.roomId,
       name: state.you.name,
       color: state.you.color || lobbyState.color,
+      hair: state.you.hair ?? lobbyState.hair,
+      outfit: state.you.outfit ?? lobbyState.outfit,
+      hairColorIndex: state.you.hairColorIndex ?? lobbyState.hairColorIndex,
     });
     return;
   }

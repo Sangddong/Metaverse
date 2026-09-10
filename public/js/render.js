@@ -1,5 +1,6 @@
 import { TILE, COLORS } from "/shared/constants.js";
 import { T } from "/shared/map.js";
+import { drawOutfit, drawHairBack, drawHairFront } from "./avatarDraw.js";
 
 const TREE_GREEN = ["#1f6b3a", "#2d8a4c", "#247844"];
 const FLOWER = ["#ff7aa2", "#ffd36e", "#fff7e8", "#9b7dff"];
@@ -185,21 +186,24 @@ export function createRenderer(canvas, map) {
       ctx.rotate(lean);
       ctx.translate(-x, -(bodyY + 12));
     }
-    ctx.fillStyle = p.color || COLORS[0];
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x - (sitting ? 15 : 13), bodyY, sitting ? 30 : 26, sitting ? 14 : 24, sitting ? 8 : 10);
-    else ctx.rect(x - 13, bodyY, 26, sitting ? 14 : 24);
-    ctx.fill();
+    drawOutfit(ctx, x, bodyY, sitting, p.outfit ?? 0, p.color || COLORS[0]);
 
     const headCy = bodyY - (sitting ? 4 : 2);
     const headR = sitting ? 11 : 12;
     const wearingBomb = game?.type === "bomb" && game.holderId === p.id;
     const eyeOff = p.dir === 1 ? -2.5 : p.dir === 3 ? 2.5 : 0;
+    const hairColor = p.hairColor || "#1a1a1a";
+
+    drawHairBack(ctx, x, headCy, headR, p.hair ?? 1, hairColor);
 
     ctx.fillStyle = p.role === "zombie" ? "#5ecf4a" : "#ffe0c8";
     ctx.beginPath();
     ctx.arc(x, headCy, headR, 0, Math.PI * 2);
     ctx.fill();
+
+    if (!wearingBomb) {
+      drawHairFront(ctx, x, headCy, headR, p.hair ?? 1, hairColor, eyeOff);
+    }
 
     if (p.pooped || (game?.type === "poop" && p.alive === false)) {
       const hx = x;
