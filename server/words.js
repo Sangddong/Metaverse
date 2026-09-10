@@ -1,0 +1,120 @@
+export const WORDS = [
+  { word: "사과", hint: "과일" },
+  { word: "바나나", hint: "과일" },
+  { word: "수박", hint: "여름 과일" },
+  { word: "컴퓨터", hint: "전자기기" },
+  { word: "키보드", hint: "입력 장치" },
+  { word: "마우스", hint: "컴퓨터 주변기기" },
+  { word: "학교", hint: "공부하는 곳" },
+  { word: "도서관", hint: "책을 빌리는 곳" },
+  { word: "지하철", hint: "대중교통" },
+  { word: "비행기", hint: "하늘 교통수단" },
+  { word: "냉장고", hint: "주방 가전" },
+  { word: "세탁기", hint: "빨래하는 기계" },
+  { word: "우산", hint: "비 오는 날" },
+  { word: "안경", hint: "눈에 쓰는 것" },
+  { word: "가방", hint: "물건을 넣는 것" },
+  { word: "신발", hint: "발에 신는 것" },
+  { word: "연필", hint: "필기도구" },
+  { word: "지우개", hint: "지우는 도구" },
+  { word: "초콜릿", hint: "달콤한 간식" },
+  { word: "아이스크림", hint: "차가운 디저트" },
+  { word: "피자", hint: "이탈리아 음식" },
+  { word: "김치", hint: "한국 음식" },
+  { word: "비빔밥", hint: "한식" },
+  { word: "떡볶이", hint: "분식" },
+  { word: "라면", hint: "면 요리" },
+  { word: "고양이", hint: "반려동물" },
+  { word: "강아지", hint: "반려동물" },
+  { word: "호랑이", hint: "동물" },
+  { word: "코끼리", hint: "큰 동물" },
+  { word: "펭귄", hint: "남극 새" },
+  { word: "무지개", hint: "비 온 뒤 하늘" },
+  { word: "별자리", hint: "밤하늘" },
+  { word: "캠핑", hint: "야외 활동" },
+  { word: "등산", hint: "산에서 하는 것" },
+  { word: "수영장", hint: "물놀이" },
+  { word: "놀이공원", hint: "놀이기구" },
+  { word: "영화관", hint: "영화를 보는 곳" },
+  { word: "박물관", hint: "전시하는 곳" },
+  { word: "편의점", hint: "가까운 가게" },
+  { word: "백화점", hint: "큰 상점" },
+  { word: "주차장", hint: "차를 두는 곳" },
+  { word: "엘리베이터", hint: "위아래로 움직임" },
+  { word: "에스컬레이터", hint: "움직이는 계단" },
+  { word: "스마트폰", hint: "손 안의 컴퓨터" },
+  { word: "충전기", hint: "배터리 채우기" },
+  { word: "이어폰", hint: "귀에 넣는 것" },
+  { word: "카메라", hint: "사진 찍는 기계" },
+  { word: "시계", hint: "시간을 봄" },
+  { word: "달력", hint: "날짜를 봄" },
+  { word: "우체국", hint: "편지와 택배" },
+  { word: "병원", hint: "아플 때 가는 곳" },
+  { word: "약국", hint: "약을 사는 곳" },
+  { word: "소방서", hint: "불을 끄는 곳" },
+  { word: "경찰서", hint: "치안" },
+  { word: "운동장", hint: "학교 밖 넓은 곳" },
+  { word: "축구공", hint: "스포츠 용품" },
+  { word: "농구대", hint: "스포츠" },
+  { word: "배드민턴", hint: "라켓 운동" },
+  { word: "피아노", hint: "악기" },
+  { word: "기타", hint: "줄이 있는 악기" },
+  { word: "노래방", hint: "노래 부르는 곳" },
+  { word: "카페", hint: "커피 마시는 곳" },
+  { word: "빵집", hint: "빵 냄새" },
+  { word: "서점", hint: "책을 파는 곳" },
+  { word: "꽃집", hint: "꽃을 파는 곳" },
+  { word: "해변", hint: "바다 근처" },
+  { word: "폭포", hint: "떨어지는 물" },
+  { word: "화산", hint: "불 뿜는 산" },
+  { word: "사막", hint: "모래가 많은 곳" },
+  { word: "정글", hint: "우거진 숲" },
+  { word: "우주선", hint: "우주로 가는 탈것" },
+  { word: "로켓", hint: "발사체" },
+  { word: "로봇", hint: "기계 사람" },
+  { word: "드래곤", hint: "상상의 동물" },
+  { word: "마법사", hint: "판타지 직업" },
+  { word: "공주", hint: "왕실" },
+  { word: "기사", hint: "갑옷 입은 사람" },
+  { word: "성곽", hint: "오래된 건물" },
+  { word: "다리", hint: "강을 건너는 구조물" },
+  { word: "터널", hint: "산 속을 뚫음" },
+  { word: "신호등", hint: "길거리 색깔" },
+  { word: "횡단보도", hint: "길을 건너는 곳" },
+  { word: "우체통", hint: "빨간 함" },
+  { word: "소화전", hint: "빨간 소방 시설" },
+  { word: "온도계", hint: "더위와 추위" },
+  { word: "선풍기", hint: "여름 가전" },
+  { word: "난로", hint: "겨울 난방" },
+  { word: "이불", hint: "덮고 잠" },
+  { word: "베개", hint: "머리 베는 것" },
+  { word: "양치", hint: "이 닦기" },
+  { word: "샴푸", hint: "머리 감는 것" },
+  { word: "수건", hint: "물기 닦기" },
+  { word: "칫솔", hint: "이 닦는 도구" },
+  { word: "휴지", hint: "닦는 종이" },
+  { word: "쓰레기통", hint: "버리는 곳" },
+  { word: "빗자루", hint: "쓰는 도구" },
+  { word: "청소기", hint: "먼지 빨기" },
+];
+
+const CHO = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+
+export function toChosung(text) {
+  return [...text]
+    .map((ch) => {
+      const code = ch.charCodeAt(0) - 0xac00;
+      if (code < 0 || code > 11171) return ch;
+      return CHO[Math.floor(code / 588)];
+    })
+    .join("");
+}
+
+export function pickWord(exclude = []) {
+  const pool = WORDS.filter((w) => !exclude.includes(w.word));
+  return (pool.length ? pool : WORDS)[Math.floor(Math.random() * (pool.length ? pool.length : WORDS.length))];
+}
+
+export function normalizeAnswer(s) {
+  return String(s || "").replace(/\s+/g, "").toLowerCase();
+}

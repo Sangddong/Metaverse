@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>모여봐 — 실시간 메타버스 광장</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div id="lobby" class="lobby">
+      <div class="lobby-art" aria-hidden="true">
+        <div class="blob b1"></div>
+        <div class="blob b2"></div>
+        <div class="blob b3"></div>
+      </div>
+      <div class="lobby-card">
+        <p class="eyebrow">최대 30명 · 실시간 광장</p>
+        <h1>모여봐</h1>
+        <p id="inviteHint" class="invite-hint" hidden>
+          방 <strong id="inviteCode"></strong>에 입장합니다
+        </p>
+        <label class="field">
+          <span>닉네임</span>
+          <input id="nameInput" maxlength="12" placeholder="이름을 입력하세요" autocomplete="nickname" />
+        </label>
+        <div class="field">
+          <span>아바타 색</span>
+          <div id="colorRow" class="color-row"></div>
+        </div>
+        <div id="homeFields">
+          <label class="field">
+            <span>방 코드 (비우면 공개 광장 PLAZ)</span>
+            <input id="roomInput" maxlength="6" placeholder="예: K7M2" class="mono" />
+          </label>
+          <div class="lobby-actions">
+            <button id="joinPublic" class="btn primary" type="button">공개 광장 입장</button>
+            <button id="createRoom" class="btn ghost" type="button">새 방 만들기</button>
+            <button id="joinCode" class="btn ghost" type="button">코드로 입장</button>
+          </div>
+        </div>
+        <div id="inviteActions" class="lobby-actions" hidden>
+          <button id="joinInvite" class="btn primary" type="button">완료</button>
+        </div>
+        <p id="lobbyError" class="error" hidden></p>
+      </div>
+    </div>
+
+    <div id="game" class="game" hidden>
+      <canvas id="world"></canvas>
+      <div id="hud" class="hud">
+        <header class="topbar">
+          <div class="brand">
+            <strong>모여봐</strong>
+            <span id="roomBadge" class="badge">PLAZ</span>
+            <span id="countBadge" class="badge dim">0/30</span>
+            <button id="copyLinkBtn" class="icon-btn copy-link" type="button" title="방 링크 복사">🔗</button>
+          </div>
+          <div id="gameBanner" class="game-banner" hidden></div>
+          <div id="remainTimer" class="remain-timer" hidden>남은시간: 0초</div>
+          <div class="top-actions">
+            <button id="helpBtn" class="icon-btn" type="button" title="조작">?</button>
+            <button id="settingsBtn" class="icon-btn" type="button" title="이름 변경">✎</button>
+            <div id="gamesWrap" class="games-wrap" hidden>
+              <button id="gamesBtn" class="icon-btn" type="button" title="미니게임">🎮</button>
+              <div id="gamesPanel" class="games-panel" hidden>
+                <p class="games-label">미니게임</p>
+                <div id="gameStartRow" class="games-list"></div>
+              </div>
+            </div>
+            <button id="stopGameBtn" class="btn danger tiny stop-game-btn" type="button" hidden>게임 종료</button>
+            <button id="hostBtn" class="icon-btn host" type="button" hidden>방장</button>
+          </div>
+        </header>
+
+        <aside class="players-panel">
+          <h2>참가자</h2>
+          <ul id="playerList"></ul>
+        </aside>
+
+        <div class="chat-dock">
+          <div id="chatLog" class="chat-log"></div>
+          <form id="chatForm" class="chat-form">
+            <input id="chatInput" maxlength="80" placeholder="채팅 입력 (Enter)" autocomplete="off" />
+            <button type="submit" class="btn tiny">보내기</button>
+          </form>
+        </div>
+
+      </div>
+
+      <div id="toast" class="toast" hidden></div>
+      <div id="gameFlash" class="game-flash" hidden>
+        <p id="gameFlashText"></p>
+      </div>
+      <div id="helpModal" class="modal" hidden>
+        <div class="sheet">
+          <h3>조작법</h3>
+          <ul>
+            <li><kbd>WASD</kbd> / 방향키 — 이동</li>
+            <li><kbd>Space</kbd> — 달리기</li>
+            <li><kbd>C</kbd> — 앉기 / 일어나기</li>
+            <li><kbd>X</kbd> — 춤추기</li>
+            <li><kbd>Z</kbd> — 찌르기</li>
+            <li><kbd>Enter</kbd> — 채팅</li>
+          </ul>
+          <p class="hint">방장은 참가자 강퇴·채팅금지·방장 위임·방 잠금을 할 수 있습니다.</p>
+          <button id="closeHelp" class="btn primary" type="button">닫기</button>
+        </div>
+      </div>
+
+      <div id="settingsModal" class="modal" hidden>
+        <div class="sheet">
+          <h3>내 프로필</h3>
+          <label class="field">
+            <span>사용자명</span>
+            <input id="renameInput" maxlength="12" />
+          </label>
+          <div class="field">
+            <span>색상</span>
+            <div id="settingsColors" class="color-row"></div>
+          </div>
+          <div class="row-actions">
+            <button id="saveSettings" class="btn primary" type="button">저장</button>
+            <button id="closeSettings" class="btn ghost" type="button">닫기</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="hostModal" class="modal" hidden>
+        <div class="sheet">
+          <h3>방장 메뉴</h3>
+          <p class="hint">방 잠금과 참가자 관리를 할 수 있습니다.</p>
+          <div class="row-actions">
+            <button id="lockRoomBtn" class="btn ghost" type="button">방 잠금</button>
+            <button id="closeHost" class="btn ghost" type="button">닫기</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="chosungOverlay" class="chosung-top" hidden>
+        <div class="chosung-panel">
+          <p class="chosung-meta">
+            <span id="chosungRound">1 / 8 라운드</span>
+            <span id="chosungTimer" class="chosung-timer">25</span>
+          </p>
+          <div id="chosungClue" class="chosung-clue">ㄱㄱ</div>
+          <p id="chosungHint" class="chosung-hint">힌트</p>
+          <p class="chosung-guide">채팅창에 정답을 입력하세요</p>
+        </div>
+      </div>
+
+      <div id="colorOverlay" class="paint-dock" hidden>
+        <p class="paint-dock-label">색상 선택 · 걸어다니며 칠하기</p>
+        <div id="palette" class="palette"></div>
+        <button id="clearPaint" class="btn ghost tiny" type="button">맵 지우기</button>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/js/main.js?v=rename1"></script>
+  </body>
+</html>
