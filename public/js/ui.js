@@ -69,6 +69,8 @@ export function bindLobby(state, handlers) {
     $("nameInput").addEventListener("keydown", (e) => {
       if (e.key === "Enter") handlers.join(inviteCode);
     });
+    // 자동 입장 없음 — 닉네임 확인 후 완료 버튼
+    setTimeout(() => $("nameInput")?.focus(), 0);
   } else {
     $("homeFields").hidden = false;
     $("inviteActions").hidden = true;

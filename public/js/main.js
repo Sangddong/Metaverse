@@ -53,15 +53,22 @@ function rememberRoom(roomId) {
 }
 
 function emitJoin({ roomId, name, color }) {
+  const cleaned = String(name || "").trim();
+  if (!cleaned) {
+    showLobbyError("닉네임을 입력하세요.");
+    joining = false;
+    return;
+  }
   joining = true;
-  pendingJoin = { roomId, name, color };
-  socket.emit("join", { roomId: roomId || "PLAZ", name, color });
+  pendingJoin = { roomId, name: cleaned, color };
+  socket.emit("join", { roomId: roomId || "PLAZ", name: cleaned, color });
 }
 
 function joinRoom(roomId) {
-  const name = ($("nameInput")?.value || localStorage.getItem("playza-name") || "").trim();
+  const name = ($("nameInput")?.value || "").trim();
   if (!name) {
     showLobbyError("닉네임을 입력하세요.");
+    $("nameInput")?.focus();
     return;
   }
   localStorage.setItem("playza-name", name);
@@ -151,6 +158,7 @@ function applyJoined(payload) {
   localStorage.setItem("playza-name", payload.you.name);
   localStorage.setItem("playza-color", lobbyState.color);
   rememberRoom(payload.id);
+  sessionStorage.setItem("playza-in-game", "1");
   enterGame();
   renderer.resize();
   loadChat(payload.chat);
@@ -160,7 +168,10 @@ function applyJoined(payload) {
 }
 
 function tryAutoJoin() {
-  if (state.you && state.roomId) {
+  // 같은 탭에서 이미 입장했던 경우(새로고침/재연결)만 자동 재입장
+  if (sessionStorage.getItem("playza-in-game") !== "1") return;
+
+  if (state.you?.name && state.roomId) {
     emitJoin({
       roomId: state.roomId,
       name: state.you.name,
@@ -168,13 +179,12 @@ function tryAutoJoin() {
     });
     return;
   }
-  if (pendingJoin) {
+  if (pendingJoin?.name) {
     emitJoin(pendingJoin);
     return;
   }
-  // 방 링크(/r/코드)로 들어온 새로고침만 자동 재입장
   const roomFromUrl = parseRoomFromUrl();
-  const name = localStorage.getItem("playza-name");
+  const name = ($("nameInput")?.value || localStorage.getItem("playza-name") || "").trim();
   if (roomFromUrl && name && $("lobby") && !$("lobby").hidden) {
     if ($("nameInput") && !$("nameInput").value) $("nameInput").value = name;
     joinRoom(roomFromUrl);
@@ -192,6 +202,7 @@ socket.on("joinDenied", (msg) => {
 });
 socket.on("kicked", (msg) => {
   toast(msg);
+  sessionStorage.removeItem("playza-in-game");
   localStorage.removeItem("playza-room");
   location.href = "/";
 });

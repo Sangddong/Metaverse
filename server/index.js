@@ -146,6 +146,11 @@ io.on("connection", (socket) => {
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "")
       .slice(0, 6) || "PLAZ";
+    const cleanedName = sanitizeName(name, "");
+    if (!cleanedName) {
+      socket.emit("joinDenied", "닉네임을 입력하세요.");
+      return;
+    }
     const room = getOrCreate(code);
     if (room.players.size >= MAX_PLAYERS) {
       socket.emit("joinDenied", "방이 가득 찼습니다. (최대 30명)");
@@ -156,10 +161,31 @@ io.on("connection", (socket) => {
       return;
     }
 
+    // 같은 소켓이 이미 방에 있으면 재입장 처리
+    if (joined) {
+      const prevRoom = rooms.get(joined);
+      const prev = prevRoom?.players.get(socket.id);
+      if (prev && joined === code) {
+        prev.name = cleanedName;
+        if (COLORS.includes(color)) prev.color = color;
+        socket.emit("joined", { you: snapshotPlayer(prev), ...roomState(prevRoom) });
+        emitState(prevRoom);
+        return;
+      }
+      if (prevRoom) {
+        prevRoom.players.delete(socket.id);
+        if (prevRoom.hostId === socket.id) ensureHost(prevRoom);
+        if (prevRoom.players.size === 0) rooms.delete(prevRoom.id);
+        else emitState(prevRoom);
+      }
+      socket.leave(joined);
+      joined = null;
+    }
+
     const spawn = spawnPoint();
     const player = {
       id: socket.id,
-      name: sanitizeName(name, `손님${Math.floor(Math.random() * 90 + 10)}`),
+      name: cleanedName,
       color: COLORS.includes(color) ? color : COLORS[room.players.size % COLORS.length],
       x: spawn.x + (Math.random() * 80 - 40),
       y: spawn.y + (Math.random() * 60 - 30),
