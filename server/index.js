@@ -75,6 +75,7 @@ function createRoom(code, hostName) {
     game: null,
     mutes: new Set(),
     locked: false,
+    screenShare: null,
   };
   rooms.set(code, room);
   return room;
@@ -117,7 +118,19 @@ function roomState(room) {
     game: publicGame(room.game),
     maxPlayers: MAX_PLAYERS,
     mutes: [...room.mutes],
+    screenShare: room.screenShare
+      ? { id: room.screenShare.id, name: room.screenShare.name }
+      : null,
   };
+}
+
+function clearScreenShare(room, reason) {
+  if (!room?.screenShare) return;
+  const prev = room.screenShare;
+  room.screenShare = null;
+  io.to(room.id).emit("screen:state", null);
+  if (reason) system(room, reason.replace("{name}", prev.name));
+  emitState(room);
 }
 
 function emitState(room) {
@@ -339,6 +352,47 @@ io.on("connection", (socket) => {
     io.to(room.id).emit("playerPatch", snapshotPlayer(p));
   });
 
+  socket.on("screen:start", () => {
+    const room = rooms.get(joined);
+    const p = room?.players.get(socket.id);
+    if (!room || !p) return;
+    if (room.screenShare && room.screenShare.id !== socket.id) {
+      socket.emit("errorMsg", `${room.screenShare.name}님이 이미 화면을 공유 중입니다.`);
+      return;
+    }
+    room.screenShare = { id: p.id, name: p.name };
+    io.to(room.id).emit("screen:state", { id: p.id, name: p.name });
+    system(room, `${p.name}님이 화면 공유를 시작했습니다.`);
+    emitState(room);
+  });
+
+  socket.on("screen:stop", () => {
+    const room = rooms.get(joined);
+    const p = room?.players.get(socket.id);
+    if (!room || !p) return;
+    if (!room.screenShare || room.screenShare.id !== socket.id) {
+      socket.emit("errorMsg", "화면 공유 중이 아닙니다.");
+      return;
+    }
+    clearScreenShare(room, `${p.name}님이 화면 공유를 종료했습니다.`);
+  });
+
+  socket.on("screen:watch", () => {
+    const room = rooms.get(joined);
+    const p = room?.players.get(socket.id);
+    if (!room || !p || !room.screenShare) return;
+    if (room.screenShare.id === socket.id) return;
+    const sharerSock = io.sockets.sockets.get(room.screenShare.id);
+    sharerSock?.emit("screen:viewer", { viewerId: socket.id, viewerName: p.name });
+  });
+
+  socket.on("screen:signal", ({ to, data } = {}) => {
+    const room = rooms.get(joined);
+    if (!room || !to || !data) return;
+    if (!room.players.has(socket.id) || !room.players.has(to)) return;
+    io.to(to).emit("screen:signal", { from: socket.id, data });
+  });
+
   socket.on("chat", (text) => {
     const room = rooms.get(joined);
     const p = room?.players.get(socket.id);
@@ -417,6 +471,10 @@ io.on("connection", (socket) => {
     const target = room.players.get(id);
     if (!target) return;
     const sock = io.sockets.sockets.get(id);
+    if (room.screenShare?.id === id) {
+      room.screenShare = null;
+      io.to(room.id).emit("screen:state", null);
+    }
     system(room, `${target.name} 님이 방에서 내보내졌습니다.`);
     room.players.delete(id);
     sock?.emit("kicked", "방장에 의해 강퇴되었습니다.");
@@ -464,6 +522,11 @@ io.on("connection", (socket) => {
     if (!p) return;
     room.players.delete(socket.id);
     room.mutes.delete(socket.id);
+    if (room.screenShare?.id === socket.id) {
+      room.screenShare = null;
+      io.to(room.id).emit("screen:state", null);
+      system(room, `${p.name}님의 화면 공유가 종료되었습니다.`);
+    }
     system(room, `${p.name} 님이 퇴장했습니다.`);
     if (room.hostId === socket.id) {
       room.locked = false;

@@ -103,6 +103,22 @@
           </form>
         </div>
 
+        <div id="screenShareDock" class="screen-share-dock">
+          <button id="screenStopBtn" class="btn danger tiny screen-stop-btn" type="button" hidden>공유 중지</button>
+          <button id="screenShareBtn" class="screen-share-btn" type="button" title="화면 공유">
+            <span id="screenShareIcon" aria-hidden="true">🖥️</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="screenViewer" class="screen-viewer" hidden>
+        <div class="screen-viewer-card">
+          <div class="screen-viewer-head">
+            <strong id="screenViewerTitle">화면 공유</strong>
+            <button id="screenViewerClose" class="btn ghost tiny" type="button">닫기</button>
+          </div>
+          <video id="screenVideo" class="screen-video" autoplay playsinline muted></video>
+        </div>
       </div>
 
       <div id="toast" class="toast" hidden></div>
@@ -119,6 +135,7 @@
             <li><kbd>X</kbd> — 춤추기</li>
             <li><kbd>Z</kbd> — 찌르기</li>
             <li><kbd>Enter</kbd> — 채팅</li>
+            <li>하단 🖥️ — 화면 공유 (동시 1명)</li>
           </ul>
           <p class="hint">방장은 참가자 강퇴·채팅금지·방장 위임·방 잠금을 할 수 있습니다.</p>
           <button id="closeHelp" class="btn primary" type="button">닫기</button>
@@ -186,6 +203,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="/js/main.js?v=avatar1"></script>
+    <script type="module" src="/js/main.js?v=screen1"></script>
   </body>
 </html>

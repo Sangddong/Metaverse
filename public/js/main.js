@@ -18,6 +18,7 @@ import {
 import { createRenderer, createPaint } from "./render.js";
 import { createInput } from "./input.js";
 import { createMap } from "/shared/map.js";
+import { createScreenShare } from "./screenShare.js";
 
 const socket = io({ transports: ["websocket", "polling"] });
 const map = createMap();
@@ -73,7 +74,61 @@ const state = {
   roomId: "PLAZ",
   game: null,
   maxPlayers: 30,
+  screenShare: null,
 };
+
+const screen = createScreenShare({
+  socket,
+  getYouId: () => state.you?.id,
+  getYouName: () => state.you?.name,
+  toast,
+  onStateChange: () => {
+    state.screenShare = screen.getScreenShare();
+    updateScreenShareUi();
+  },
+});
+
+function updateScreenShareUi() {
+  const btn = $("screenShareBtn");
+  const icon = $("screenShareIcon");
+  const stop = $("screenStopBtn");
+  const dock = $("screenShareDock");
+  if (!btn || !icon || !stop || !dock) return;
+  const sharing = Boolean(state.screenShare);
+  const mine = screen.iAmSharer();
+  dock.hidden = $("game")?.hidden === true;
+  stop.hidden = !mine;
+  btn.classList.toggle("live", sharing);
+  if (!sharing) {
+    icon.textContent = "🖥️";
+    btn.title = "화면 공유 시작";
+  } else if (mine) {
+    icon.textContent = "📡";
+    btn.title = "내 공유 화면 보기";
+  } else {
+    icon.textContent = "📺";
+    btn.title = `${state.screenShare.name}님 화면 보기`;
+  }
+  renderPlayers(state);
+}
+
+function openScreenViewer() {
+  const viewer = $("screenViewer");
+  const title = $("screenViewerTitle");
+  const video = $("screenVideo");
+  if (!viewer || !state.screenShare) {
+    toast("공유 중인 화면이 없어요.");
+    return;
+  }
+  title.textContent = `${state.screenShare.name}님의 화면`;
+  viewer.hidden = false;
+  screen.ensureViewerConnection(video);
+}
+
+function closeScreenViewer() {
+  const viewer = $("screenViewer");
+  if (viewer) viewer.hidden = true;
+}
 
 let lastSent = { vx: 0, vy: 0, running: false, dir: 2 };
 let joining = false;
@@ -200,6 +255,20 @@ bindHud({
 
 paint.setHandler((action) => socket.emit("gameAction", action));
 
+$("screenShareBtn").onclick = async () => {
+  if (!state.you) return;
+  if (!state.screenShare) {
+    await screen.startShare();
+    return;
+  }
+  openScreenViewer();
+};
+$("screenStopBtn").onclick = () => screen.stopShare();
+$("screenViewerClose").onclick = () => closeScreenViewer();
+$("screenViewer")?.addEventListener("click", (e) => {
+  if (e.target === $("screenViewer")) closeScreenViewer();
+});
+
 function applyJoined(payload) {
   joining = false;
   pendingJoin = null;
@@ -209,6 +278,8 @@ function applyJoined(payload) {
   state.roomId = payload.id;
   state.game = payload.game;
   state.maxPlayers = payload.maxPlayers;
+  state.screenShare = payload.screenShare || null;
+  screen.setScreenShare(state.screenShare);
   lobbyState.color = payload.you.color || lobbyState.color;
   lobbyState.hair = clampHair(payload.you.hair ?? lobbyState.hair);
   lobbyState.outfit = clampOutfit(payload.you.outfit ?? lobbyState.outfit);
@@ -223,6 +294,7 @@ function applyJoined(payload) {
   renderPlayers(state);
   renderBanner(state.game);
   updateGameOverlays(state, paint);
+  updateScreenShareUi();
 }
 
 function tryAutoJoin() {
@@ -263,23 +335,32 @@ socket.on("joinDenied", (msg) => {
 });
 socket.on("kicked", (msg) => {
   toast(msg);
+  screen.cleanup();
   sessionStorage.removeItem("playza-in-game");
   localStorage.removeItem("playza-room");
   location.href = "/";
 });
-socket.on("errorMsg", toast);
+socket.on("errorMsg", (msg) => {
+  toast(msg);
+  if (typeof msg === "string" && msg.includes("이미 화면") && screen.isSharing() && !screen.iAmSharer()) {
+    screen.discardLocalOnly();
+  }
+});
 socket.on("state", (payload) => {
   const me = payload.players.find((p) => p.id === state.you?.id);
   state.you = me || state.you;
   state.players = payload.players;
   state.hostId = payload.hostId;
   state.roomId = payload.id;
+  state.screenShare = payload.screenShare || null;
+  screen.setScreenShare(state.screenShare);
   const prevGame = state.game;
   state.game = payload.game;
   if (prevGame && !payload.game) input.blurChat();
   renderPlayers(state);
   renderBanner(state.game);
   updateGameOverlays(state, paint);
+  updateScreenShareUi();
 });
 socket.on("tick", (payload) => {
   const prevGame = state.game;

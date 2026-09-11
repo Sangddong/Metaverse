@@ -176,6 +176,12 @@ export function renderPlayers(state) {
     const name = document.createElement("span");
     name.textContent = p.name + (p.alive === false ? " (관전)" : "") + (p.role === "zombie" ? " 🧟" : "");
     li.append(dot, name);
+    if (state.screenShare?.id === p.id) {
+      const share = document.createElement("span");
+      share.className = "share-tag";
+      share.textContent = "화면공유중";
+      li.append(share);
+    }
     if (p.id === state.you?.id) {
       const you = document.createElement("span");
       you.className = "you-tag";
