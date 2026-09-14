@@ -127,7 +127,35 @@ function openScreenViewer() {
 
 function closeScreenViewer() {
   const viewer = $("screenViewer");
+  const card = $("screenViewerCard");
+  if (document.fullscreenElement && card && document.fullscreenElement === card) {
+    document.exitFullscreen?.().catch(() => {});
+  }
   if (viewer) viewer.hidden = true;
+}
+
+function isScreenFullscreen() {
+  const card = $("screenViewerCard");
+  return Boolean(card && document.fullscreenElement === card);
+}
+
+async function toggleScreenFullscreen() {
+  const card = $("screenViewerCard");
+  const btn = $("screenFullscreenBtn");
+  const video = $("screenVideo");
+  if (!card) return;
+  try {
+    if (isScreenFullscreen()) {
+      await document.exitFullscreen();
+    } else {
+      if (card.requestFullscreen) await card.requestFullscreen();
+      else if (video?.requestFullscreen) await video.requestFullscreen();
+      else if (video?.webkitEnterFullscreen) video.webkitEnterFullscreen();
+    }
+  } catch {
+    toast("전체화면으로 전환하지 못했어요.");
+  }
+  if (btn) btn.textContent = isScreenFullscreen() ? "전체화면 종료" : "전체화면";
 }
 
 let lastSent = { vx: 0, vy: 0, running: false, dir: 2 };
@@ -265,6 +293,11 @@ $("screenShareBtn").onclick = async () => {
 };
 $("screenStopBtn").onclick = () => screen.stopShare();
 $("screenViewerClose").onclick = () => closeScreenViewer();
+$("screenFullscreenBtn").onclick = () => toggleScreenFullscreen();
+document.addEventListener("fullscreenchange", () => {
+  const btn = $("screenFullscreenBtn");
+  if (btn) btn.textContent = isScreenFullscreen() ? "전체화면 종료" : "전체화면";
+});
 $("screenViewer")?.addEventListener("click", (e) => {
   if (e.target === $("screenViewer")) closeScreenViewer();
 });

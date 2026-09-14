@@ -281,12 +281,29 @@ kbd {
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
 }
+.screen-viewer-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 .screen-video {
   display: block;
   width: 100%;
   max-height: min(70vh, 640px);
   background: #0a0a0a;
   object-fit: contain;
+}
+.screen-viewer-card:fullscreen,
+.screen-viewer-card:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  background: #000;
+}
+.screen-viewer-card:fullscreen .screen-video,
+.screen-viewer-card:-webkit-full-screen .screen-video {
+  max-height: calc(100vh - 52px);
+  height: calc(100vh - 52px);
 }
 .share-tag {
   margin-left: 4px;

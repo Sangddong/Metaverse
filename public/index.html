@@ -112,10 +112,13 @@
       </div>
 
       <div id="screenViewer" class="screen-viewer" hidden>
-        <div class="screen-viewer-card">
+        <div class="screen-viewer-card" id="screenViewerCard">
           <div class="screen-viewer-head">
             <strong id="screenViewerTitle">화면 공유</strong>
-            <button id="screenViewerClose" class="btn ghost tiny" type="button">닫기</button>
+            <div class="screen-viewer-actions">
+              <button id="screenFullscreenBtn" class="btn ghost tiny" type="button">전체화면</button>
+              <button id="screenViewerClose" class="btn ghost tiny" type="button">닫기</button>
+            </div>
           </div>
           <video id="screenVideo" class="screen-video" autoplay playsinline muted></video>
         </div>
@@ -203,6 +206,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="/js/main.js?v=screen1"></script>
+    <script type="module" src="/js/main.js?v=screenFs1"></script>
   </body>
 </html>
