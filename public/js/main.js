@@ -414,11 +414,22 @@ socket.on("chat", (msg) => {
     showFlash(msg.text, msg.text.includes("뽑혔") || msg.text.includes("게임 종료") ? 3500 : 2800);
   }
 });
-socket.on("poked", ({ to, shakeUntil }) => {
-  const until = shakeUntil || Date.now() + 420;
+socket.on("poked", ({ from, to, shakeUntil }) => {
+  const until = shakeUntil || Date.now() + 1500;
   const i = state.players.findIndex((x) => x.id === to);
   if (i >= 0) state.players[i] = { ...state.players[i], shakeUntil: until };
   if (state.you?.id === to) state.you = { ...state.you, shakeUntil: until };
+  if (from && to) renderer.addPoke(from, to);
+  clearTimeout(socket._shakeClear);
+  socket._shakeClear = setTimeout(() => {
+    const j = state.players.findIndex((x) => x.id === to);
+    if (j >= 0 && state.players[j].shakeUntil === until) {
+      state.players[j] = { ...state.players[j], shakeUntil: 0 };
+    }
+    if (state.you?.id === to && state.you.shakeUntil === until) {
+      state.you = { ...state.you, shakeUntil: 0 };
+    }
+  }, Math.max(0, until - Date.now() + 30));
 });
 socket.on("playerJoined", () => {});
 socket.on("playerPatch", (p) => {

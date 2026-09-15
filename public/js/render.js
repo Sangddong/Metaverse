@@ -11,6 +11,7 @@ export function createRenderer(canvas, map) {
   let dpr = 1;
   const bubbles = [];
   const particles = [];
+  const pokeFx = [];
   const vis = new Map();
 
   function visPos(p) {
@@ -160,8 +161,12 @@ export function createRenderer(canvas, map) {
     let x = (pos?.x ?? p.x) - camera.x;
     let y = (pos?.y ?? p.y) - camera.y;
     if (p.shakeUntil && p.shakeUntil > Date.now()) {
-      x += Math.sin(Date.now() / 30) * 5;
-      y += Math.cos(Date.now() / 37) * 3;
+      const remain = Math.max(0, (p.shakeUntil - Date.now()) / 1500);
+      const amp = 5 * remain;
+      x += Math.sin(Date.now() / 28) * amp;
+      y += Math.cos(Date.now() / 34) * amp * 0.65;
+    } else if (p.shakeUntil) {
+      p.shakeUntil = 0;
     }
     const sitting = p.sitting;
     const dancing = Boolean(p.dancing);
@@ -356,11 +361,13 @@ export function createRenderer(canvas, map) {
     bubbles.push({ playerId, text, until: Date.now() + 2800 });
   }
 
-  function addPoke(_from, to, shakeUntil) {
-    // local shake apply happens in main via playerPatch / poked
-    void _from;
-    void to;
-    void shakeUntil;
+  function addPoke(fromId, toId) {
+    pokeFx.push({
+      fromId,
+      toId,
+      startedAt: Date.now(),
+      until: Date.now() + 650,
+    });
   }
 
   function addBoom(x, y) {
@@ -378,6 +385,26 @@ export function createRenderer(canvas, map) {
 
   function drawFx(players) {
     const now = Date.now();
+    for (const fx of pokeFx) {
+      if (fx.until < now) continue;
+      const from = players.find((p) => p.id === fx.fromId);
+      const to = players.find((p) => p.id === fx.toId);
+      if (!from || !to) continue;
+      const t = 1 - (fx.until - now) / (fx.until - fx.startedAt);
+      const ease = Math.min(1, Math.max(0, t));
+      const wx = from.x + (to.x - from.x) * (0.2 + ease * 0.45);
+      const wy = from.y + (to.y - from.y) * (0.2 + ease * 0.45) - 12;
+      const angle = Math.atan2(to.y - from.y, to.x - from.x);
+      ctx.save();
+      ctx.globalAlpha = 1 - ease * 0.25;
+      ctx.translate(wx - camera.x, wy - camera.y);
+      ctx.rotate(angle);
+      ctx.font = "24px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🥊", 0, 0);
+      ctx.restore();
+    }
     for (const b of bubbles) {
       const p = players.find((x) => x.id === b.playerId);
       if (!p || b.until < now) continue;
@@ -407,6 +434,7 @@ export function createRenderer(canvas, map) {
     }
     while (bubbles[0] && bubbles[0].until < now) bubbles.shift();
     while (particles[0] && particles[0].until < now) particles.shift();
+    while (pokeFx[0] && pokeFx[0].until < now) pokeFx.shift();
   }
 
   function draw(state) {

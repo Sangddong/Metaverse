@@ -630,6 +630,6 @@ export function tryPoke(room, player, targetId) {
   const target = room.players.get(targetId);
   if (!target || target.id === player.id) return { ok: false, error: "대상을 찾을 수 없어요." };
   if (dist(player, target) > POKE_RANGE) return { ok: false, error: "너무 멀어요." };
-  target.shakeUntil = now + 420;
+  target.shakeUntil = now + 1500;
   return { ok: true, targetId: target.id };
 }

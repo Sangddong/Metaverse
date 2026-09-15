@@ -313,7 +313,7 @@ io.on("connection", (socket) => {
     io.to(room.id).emit("poked", {
       from: p.id,
       to: res.targetId,
-      shakeUntil: target?.shakeUntil || Date.now() + 420,
+      shakeUntil: target?.shakeUntil || Date.now() + 1500,
     });
     io.to(room.id).emit("playerPatch", snapshotPlayer(target));
   });
